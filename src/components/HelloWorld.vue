@@ -1,96 +1,85 @@
 <script setup lang="ts">
 import { ref } from "vue";
-import viteLogo from "../assets/vite.svg";
-import heroImg from "../assets/hero.png";
-import vueLogo from "../assets/vue.svg";
+import type { Player } from "../types/player";
+import type { Question } from "../types/question";
+const gameStarted = ref(false);
 
-const count = ref(0);
+const playersData = ref<Player[]>([
+  {
+    id: 0,
+    name: "Komputer",
+    hp: 100,
+    power: 0,
+    wins: 0,
+  },
+  {
+    id: 1,
+    name: "Marek",
+    hp: 100,
+    power: 0,
+    wins: 0,
+  },
+]);
+
+const startGame = () => {
+  gameStarted.value = true;
+  drawQuestion();
+};
+
+const questions = ref<Question[]>([]);
+
+const generateQuestions = (min: number, max: number) => {
+  const questionsTable: Question[] = [];
+  for (let num1 = min; num1 <= max; num1++) {
+    for (let num2 = 1; num2 <= 10; num2++) {
+      questionsTable.push({
+        num1,
+        num2,
+        answer: num1 * num2,
+      });
+    }
+  }
+
+  return questionsTable;
+};
+
+const shuffleQuestions = (questions: Question[]): Question[] => {
+  return [...questions].sort(() => Math.random() - 0.5);
+};
+
+const currentQuestion = ref<Question | null>(null);
+
+questions.value = shuffleQuestions(generateQuestions(2, 4));
+
+const drawQuestion = () => {
+  currentQuestion.value = questions.value.shift() ?? null;
+};
 </script>
 
 <template>
-  <section id="center">
-    <div class="hero">
-      <img :src="heroImg" class="base" width="170" height="179" alt="" />
-      <img :src="vueLogo" class="framework" alt="Vue logo" />
-      <img :src="viteLogo" class="vite" alt="Vite logo" />
+  <section
+    id="plaing-table"
+    class="flex flex-col gap-10 justify-center items-center h-screen"
+  >
+    <div id="player1-table" class="w-[300px]">
+      <p>Gracz1: {{ playersData[0].name }}</p>
+      <p>Health: {{ playersData[0].hp }}</p>
+      <p>Pasek Mocy: {{ playersData[0].power }}</p>
     </div>
-    <div>
-      <h1>Get started</h1>
-      <p>Edit <code>src/App.vue</code> and save to test <code>HMR</code></p>
+    <div id="question" class="w-[300px]" v-if="currentQuestion && gameStarted">
+      Pytanie: {{ currentQuestion.num1 }} * {{ currentQuestion.num2 }} = ???
     </div>
-    <button type="button" class="counter" @click="count++">
-      Count is {{ count }}
-    </button>
-    <p>Dupa 2</p>
-  </section>
-
-  <div class="ticks"></div>
-
-  <section id="next-steps">
-    <div id="docs">
-      <svg class="icon" role="presentation" aria-hidden="true">
-        <use href="/icons.svg#documentation-icon"></use>
-      </svg>
-      <h2>Documentation</h2>
-      <p>Your questions, answered</p>
-      <ul>
-        <li>
-          <a href="https://vite.dev/" target="_blank">
-            <img class="logo" :src="viteLogo" alt="" />
-            Explore Vite
-          </a>
-        </li>
-        <li>
-          <a href="https://vuejs.org/" target="_blank">
-            <img class="button-icon" :src="vueLogo" alt="" />
-            Learn more
-          </a>
-        </li>
-      </ul>
+    <div id="start-button" v-if="!gameStarted" @click="startGame">Start</div>
+    <div id="answers" v-if="gameStarted">
+      <button type="button"></button>
+      <button type="button"></button>
+      <button type="button"></button>
+      <button type="button"></button>
     </div>
-    <div id="social">
-      <svg class="icon" role="presentation" aria-hidden="true">
-        <use href="/icons.svg#social-icon"></use>
-      </svg>
-      <h2>Connect with us</h2>
-      <p>Join the Vite community</p>
-      <ul>
-        <li>
-          <a href="https://github.com/vitejs/vite" target="_blank">
-            <svg class="button-icon" role="presentation" aria-hidden="true">
-              <use href="/icons.svg#github-icon"></use>
-            </svg>
-            GitHub
-          </a>
-        </li>
-        <li>
-          <a href="https://chat.vite.dev/" target="_blank">
-            <svg class="button-icon" role="presentation" aria-hidden="true">
-              <use href="/icons.svg#discord-icon"></use>
-            </svg>
-            Discord
-          </a>
-        </li>
-        <li>
-          <a href="https://x.com/vite_js" target="_blank">
-            <svg class="button-icon" role="presentation" aria-hidden="true">
-              <use href="/icons.svg#x-icon"></use>
-            </svg>
-            X.com
-          </a>
-        </li>
-        <li>
-          <a href="https://bsky.app/profile/vite.dev" target="_blank">
-            <svg class="button-icon" role="presentation" aria-hidden="true">
-              <use href="/icons.svg#bluesky-icon"></use>
-            </svg>
-            Bluesky
-          </a>
-        </li>
-      </ul>
+    <div id="player2-table" class="w-[300px]">
+      <p>Gracz2: {{ playersData[1].name }}</p>
+      <p>Health: {{ playersData[1].hp }}</p>
+      <p>Pasek Mocy: {{ playersData[1].power }}</p>
     </div>
   </section>
-
-  <div class="ticks"></div>
-  <section id="spacer"></section>
 </template>
