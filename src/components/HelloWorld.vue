@@ -2,9 +2,12 @@
 import { ref } from "vue";
 import type { Player } from "../types/player";
 import type { Question } from "../types/question";
-const gameStarted = ref(false);
 
-const playersData = ref<Player[]>([
+const gameStarted = ref(false);
+const questions = ref<Question[]>([]);
+const currentQuestion = ref<Question | null>(null);
+const answers = ref<number[]>([]);
+const players = ref<Player[]>([
   {
     id: 0,
     name: "Komputer",
@@ -22,11 +25,9 @@ const playersData = ref<Player[]>([
 ]);
 
 const startGame = () => {
-  gameStarted.value = true;
   drawQuestion();
+  gameStarted.value = true;
 };
-
-const questions = ref<Question[]>([]);
 
 const generateQuestions = (min: number, max: number) => {
   const questionsTable: Question[] = [];
@@ -47,8 +48,6 @@ const shuffleQuestions = (questions: Question[]): Question[] => {
   return [...questions].sort(() => Math.random() - 0.5);
 };
 
-const currentQuestion = ref<Question | null>(null);
-
 questions.value = shuffleQuestions(generateQuestions(2, 4));
 
 const drawQuestion = () => {
@@ -62,9 +61,9 @@ const drawQuestion = () => {
     class="flex flex-col gap-10 justify-center items-center h-screen"
   >
     <div id="player1-table" class="w-[300px]">
-      <p>Gracz1: {{ playersData[0].name }}</p>
-      <p>Health: {{ playersData[0].hp }}</p>
-      <p>Pasek Mocy: {{ playersData[0].power }}</p>
+      <p>Gracz1: {{ players[0].name }}</p>
+      <p>Health: {{ players[0].hp }}</p>
+      <p>Pasek Mocy: {{ players[0].power }}</p>
     </div>
     <div id="question" class="w-[300px]" v-if="currentQuestion && gameStarted">
       Pytanie: {{ currentQuestion.num1 }} * {{ currentQuestion.num2 }} = ???
@@ -77,9 +76,9 @@ const drawQuestion = () => {
       <button type="button"></button>
     </div>
     <div id="player2-table" class="w-[300px]">
-      <p>Gracz2: {{ playersData[1].name }}</p>
-      <p>Health: {{ playersData[1].hp }}</p>
-      <p>Pasek Mocy: {{ playersData[1].power }}</p>
+      <p>Gracz2: {{ players[1].name }}</p>
+      <p>Health: {{ players[1].hp }}</p>
+      <p>Pasek Mocy: {{ players[1].power }}</p>
     </div>
   </section>
 </template>
