@@ -81,7 +81,7 @@ Generuje wszystkie pytania dla wybranego zakresu tabliczki mnożenia.
 @returns Tablica obiektów Question.
 */
 
-const generateQuestions = (min: number, max: number) => {
+const generateQuestions = (min: number, max: number): Question[] => {
   const questionsTable: Question[] = [];
   for (let num1 = min; num1 <= max; num1++) {
     for (let num2 = 1; num2 <= 10; num2++) {
@@ -121,7 +121,7 @@ const generatePossibleAnswers = (
   min: number,
   max: number,
   offset: number,
-) => {
+): number[] => {
   const table: number[] = [];
   const localMin = Math.max(answer - offset, min);
   const localMax = Math.min(answer + offset, max);
@@ -151,7 +151,7 @@ ponownie tasuje wynik.
 */
 const generateAnswers = (array: number[], answer: number): number[] => {
   const localArray = shuffle(array);
-  const fourItemsArray = [];
+  const fourItemsArray: number[] = [];
   for (let i = 0; i < 3; i++) {
     fourItemsArray.push(localArray[i]);
   }
@@ -205,6 +205,18 @@ const drawAnswers = () => {
 
   answers.value = localArray;
 };
+
+const handleAnswerClick = (answer: number) => {
+  console.log(answer);
+  if (!currentQuestion.value) return;
+  const player1 = players.value[1];
+  const computer = players.value[0];
+  if (answer === currentQuestion.value.answer) {
+    player1.power++;
+    player1.wins++;
+    computer.hp--;
+  }
+};
 </script>
 
 <template>
@@ -221,8 +233,18 @@ const drawAnswers = () => {
       Pytanie: {{ currentQuestion.num1 }} * {{ currentQuestion.num2 }} = ???
     </div>
     <div id="start-button" v-if="!gameStarted" @click="startGame">Start</div>
-    <div id="answers" v-if="gameStarted">
-      <button type="button" class="" v-for="answer in answers" :key="answer">
+    <div
+      id="answers"
+      v-if="gameStarted"
+      class="grid grid-cols-2 gap-4 w-[300px]"
+    >
+      <button
+        type="button"
+        @click="handleAnswerClick(answer)"
+        class="p-2 border-2 border-solid"
+        v-for="answer in answers"
+        :key="answer"
+      >
         {{ answer }}
       </button>
     </div>
