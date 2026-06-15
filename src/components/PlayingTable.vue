@@ -1,12 +1,16 @@
 /** Komponent odpowiedzialny za obsługę rozgrywki. Funkcjonalności: generowanie
 pytań z tabliczki mnożenia, losowanie kolejności pytań, losowanie aktualnego
 pytania, generowanie zestawu odpowiedzi (1 poprawna + 3 błędne), przechowywanie
-stanu graczy oraz przebiegu gry. */ /**
+stanu graczy oraz przebiegu gry. */ /** /** TODO remove plaers to data directory
+*/
 
 <script setup lang="ts">
 import { ref } from "vue";
 import type { Player } from "../types/player";
 import type { Question } from "../types/question";
+import type { RoundState } from "../types/round-state";
+import { players as initialPlayers } from "../data/players";
+import { roundState as initiaRoundState } from "../data/round-stete";
 
 /*
 Informacja czy gra została rozpoczęta.
@@ -18,37 +22,48 @@ Tablica wszystkich pytań dostępnych w bieżącej rozgrywce.
 */
 const questions = ref<Question[]>([]);
 
-/*
-Aktualnie wyświetlane pytanie.
-Wartość null oznacza brak aktywnego pytania.
-*/
-const currentQuestion = ref<Question | null>(null);
+const playersData = ref<Player[]>(structuredClone(initialPlayers));
 
-/*
-Aktualnie wyświetlane odpowiedzi.
-Zawiera jedną poprawną i trzy błędne odpowiedzi.
-*/
-const answers = ref<number[]>([]);
+const players = ref<number[]>([]);
 
-/*
-Dane graczy biorących udział w rozgrywce.
-*/
-const players = ref<Player[]>([
-  {
-    id: 0,
-    name: "Komputer",
-    hp: 100,
-    power: 0,
-    wins: 0,
-  },
-  {
-    id: 1,
-    name: "Marek",
-    hp: 100,
-    power: 0,
-    wins: 0,
-  },
-]);
+const roundState = ref<RoundState>(structuredClone(initiaRoundState));
+
+const initRoundState = (initiaRoundState: RoundState) => {
+  return structuredClone(initiaRoundState);
+};
+
+/**
+ * ustawia stan rundy
+ *
+ *
+ * @param roundState
+ * @param players tablica zawierająca id aktualnych graczy
+ * @param roundNo
+ * @param currentPlayerId
+ * @param opponentId
+ * @param currentQuestion
+ * @param answers
+ */
+
+const setRoundState = (
+  roundState: RoundState,
+  roundNo: number,
+  currentPlayerId: number,
+  opponentId: number,
+  currentQuestion: Question | null,
+  answers: number[],
+) => {
+  Object.assign(roundState, {
+    roundNo,
+    currentPlayerId,
+    opponentId,
+    currentQuestion,
+    answers,
+  });
+};
+
+const randomIndex = (): number =>
+  Math.floor(Math.random() * players.value.length);
 
 /**
 
@@ -60,15 +75,41 @@ generuje pytania,
 tasuje ich kolejność,
 losuje pierwsze pytanie,
 generuje odpowiedzi,
+ustawia stan rundy
 ustawia stan gry jako rozpoczęty.
 
 @returns void
 */
-
 const startGame = () => {
+  players.value = [0, 1];
+  const initialPlayerId = playersData.value[randomIndex()].id;
+  const opponentId = playersData.value.filter(
+    (player) => player.id !== initialPlayerId,
+  )[0].id;
   questions.value = shuffle(generateQuestions(2, 4));
-  drawQuestion();
-  drawAnswers();
+  const currentQuestion = drawQuestion(questions.value);
+
+  if (!currentQuestion) return;
+
+  const possibleAnswers = generatePossibleAnswers(
+    currentQuestion.answer,
+    2,
+    40,
+    5,
+  );
+
+  const answers = generateAnswers(possibleAnswers, currentQuestion.answer);
+
+  setRoundState(
+    roundState.value,
+    1,
+    initialPlayerId,
+    opponentId,
+    currentQuestion,
+    answers,
+  );
+
+  console.log("roundState", roundState.value);
   gameStarted.value = true;
 };
 
@@ -181,8 +222,8 @@ i ustawia go jako aktualne pytanie.
 @returns void
 */
 
-const drawQuestion = () => {
-  currentQuestion.value = questions.value.shift() ?? null;
+const drawQuestion = (questions: Question[]) => {
+  return questions.shift() ?? null;
 };
 
 /**
@@ -192,30 +233,50 @@ i zapisuje je do zmiennej answers.
 @returns void
 */
 
-const drawAnswers = () => {
-  // for possibility currenQuestion equels null
-  if (!currentQuestion.value) {
-    return;
-  }
+// const drawAnswers = (currentQuestion: Question, possibleAnswers: number[]) => {
+// for possibility currenQuestion equels null
+// if (!currentQuestion.value) {
+//   return;
+// }
 
-  const localArray = generateAnswers(
-    generatePossibleAnswers(currentQuestion.value.answer, 2, 40, 5),
-    currentQuestion.value.answer,
+//   const localArray = generateAnswers(possibleAnswers, currentQuestion.answer);
+
+//   return localArray;
+// };
+
+const handleAnswerClick = (answer: number | null) => {
+  let { currentPlayerId, currentQuestion, opponentId, roundNo } =
+    roundState.value;
+  if (!currentQuestion) return;
+
+  const owner = playersData.value[currentPlayerId!];
+  const opponent = playersData.value[opponentId!];
+  const nextQuestion: Question | null = drawQuestion(questions.value);
+  const nextAnswers: number[] | null = generateAnswers(
+    generatePossibleAnswers(nextQuestion!.answer, 2, 40, 5),
+    nextQuestion!.answer,
   );
 
-  answers.value = localArray;
-};
-
-const handleAnswerClick = (answer: number) => {
-  console.log(answer);
-  if (!currentQuestion.value) return;
-  const player1 = players.value[1];
-  const computer = players.value[0];
-  if (answer === currentQuestion.value.answer) {
-    player1.power++;
-    player1.wins++;
-    computer.hp--;
+  if (answer === currentQuestion.answer) {
+    owner.power++;
+    owner.wins++;
+    opponent.hp--;
+  } else {
+    owner.hp--;
   }
+
+  roundNo = (roundNo ?? 0) + 1;
+
+  setRoundState(
+    roundState.value,
+    roundNo,
+    opponentId!,
+    currentPlayerId!,
+    nextQuestion,
+    nextAnswers,
+  );
+
+  console.log("state after", roundState.value);
 };
 </script>
 
@@ -224,13 +285,26 @@ const handleAnswerClick = (answer: number) => {
     id="plaing-table"
     class="flex flex-col gap-10 justify-center items-center h-screen"
   >
-    <div id="player1-table" class="w-[300px]">
-      <p>Gracz1: {{ players[0].name }}</p>
-      <p>Health: {{ players[0].hp }}</p>
-      <p>Pasek Mocy: {{ players[0].power }}</p>
+    <div class="w-[300px]">
+      <div class="relative">
+        <p>Gracz1: {{ playersData[0].name }}</p>
+        <div
+          class="bg-blue-500 absolute right-1 top-0"
+          v-if="roundState.currentPlayerId === 0"
+        >
+          <span class="text-white">Gracz aktywny</span>
+        </div>
+      </div>
+      <p>Health: {{ playersData[0].hp }}</p>
+      <p>Pasek Mocy: {{ playersData[0].power }}</p>
     </div>
-    <div id="question" class="w-[300px]" v-if="currentQuestion && gameStarted">
-      Pytanie: {{ currentQuestion.num1 }} * {{ currentQuestion.num2 }} = ???
+    <div
+      id="question"
+      class="w-[300px]"
+      v-if="roundState.currentQuestion && gameStarted"
+    >
+      Pytanie: {{ roundState.currentQuestion.num1 }} *
+      {{ roundState.currentQuestion.num2 }} = ???
     </div>
     <div id="start-button" v-if="!gameStarted" @click="startGame">Start</div>
     <div
@@ -242,16 +316,24 @@ const handleAnswerClick = (answer: number) => {
         type="button"
         @click="handleAnswerClick(answer)"
         class="p-2 border-2 border-solid"
-        v-for="answer in answers"
+        v-for="answer in roundState.answers"
         :key="answer"
       >
         {{ answer }}
       </button>
     </div>
     <div id="player2-table" class="w-[300px]">
-      <p>Gracz2: {{ players[1].name }}</p>
-      <p>Health: {{ players[1].hp }}</p>
-      <p>Pasek Mocy: {{ players[1].power }}</p>
+      <div class="relative">
+        <p>Gracz2: {{ playersData[1].name }}</p>
+        <div
+          class="bg-blue-500 absolute right-1 top-0"
+          v-if="roundState.currentPlayerId === 1"
+        >
+          <span class="text-white">Gracz aktywny</span>
+        </div>
+      </div>
+      <p>Health: {{ playersData[1].hp }}</p>
+      <p>Pasek Mocy: {{ playersData[1].power }}</p>
     </div>
   </section>
 </template>
