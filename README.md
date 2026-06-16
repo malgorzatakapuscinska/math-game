@@ -1,41 +1,35 @@
 # Math Game for Marek
 
-Educational game for learning multiplication tables.
+Educational game designed to help my son practice multiplication tables through a simple turn-based battle system.
 
-## Project goals
+## Project Goals
 
 This project serves multiple purposes:
 
-- educational game for my son,
-- learning Vue 3 Composition API,
-- learning TypeScript,
-- learning unit testing with Vitest,
-- portfolio project.
+- Educational game for my son.
+- Learning Vue 3 Composition API.
+- Learning TypeScript.
+- Learning unit testing with Vitest.
+- Portfolio project.
 
----
+## Current Features
 
-## Current features
+- Multiplication question generation.
+- Shuffled question deck.
+- Random answer generation.
+- Turn-based gameplay.
+- Round state management.
+- Player model.
+- Question model.
+- Health Points (HP) system.
+- Power bar system.
+- Active player tracking.
+- Answer validation.
+- Win/Lose conditions.
+- Winner detection.
+- New game flow and restart option.
 
-- question generation,
-- shuffled question deck,
-- random question selection,
-- game state management,
-- player model,
-- question model.
-
----
-
-## Planned MVP
-
-- answer generation,
-- answer validation,
-- HP system,
-- power bar,
-- win/lose conditions.
-
----
-
-## Technical stack
+## Technical Stack
 
 - Vue 3
 - TypeScript
@@ -43,19 +37,23 @@ This project serves multiple purposes:
 - Tailwind CSS
 - Vitest (planned)
 
----
+## Future Plans
 
-## Future ideas
+- Action cards.
+- AI opponent.
+- Question statistics and progress tracking.
+- Difficulty levels.
+- Timer mode.
+- Achievements.
+- Cosmetic rewards.
+- Improved UI and animations.
 
-- special attacks,
-- AI opponent,
-- difficulty levels,
-- timer mode,
-- achievements,
-- cosmetic rewards.
+## Project Status
 
----
+Version 0 completed ✅
 
-## Project status
+The core gameplay loop is fully functional:
 
-Work in progress 🚧
+Start Game → Answer Questions → Deal Damage → Switch Turns → Determine Winner → Start New Game
+
+The project is under active development and new features are added incrementally.
