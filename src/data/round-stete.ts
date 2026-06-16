@@ -6,4 +6,5 @@ export const roundState: RoundState = {
   opponentId: null,
   currentQuestion: null,
   answers: [],
+  winner: null,
 };

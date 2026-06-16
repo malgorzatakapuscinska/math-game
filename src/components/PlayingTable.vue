@@ -11,6 +11,7 @@ import type { Question } from "../types/question";
 import type { RoundState } from "../types/round-state";
 import { players as initialPlayers } from "../data/players";
 import { roundState as initiaRoundState } from "../data/round-stete";
+import { MIN_HP, MAX_HP, MIN_POWER, MAX_POWER } from "../assets/game-rules";
 
 /*
 Informacja czy gra została rozpoczęta.
@@ -26,11 +27,19 @@ const playersData = ref<Player[]>(structuredClone(initialPlayers));
 
 const players = ref<number[]>([0, 1]);
 
+let gameWinnerId = ref<number | null>(null);
+
 const gamePlayers = computed(() =>
   players.value
     .map((id) => getPlayerByID(id))
     .filter((player) => player !== undefined),
 );
+
+const gameWinner = computed(() => {
+  if (gameWinnerId.value === null) return null;
+
+  return getPlayerByID(gameWinnerId.value);
+});
 
 const roundState = ref<RoundState>(structuredClone(initiaRoundState));
 
@@ -53,7 +62,7 @@ const initRoundState = (initiaRoundState: RoundState) => {
 
 const setRoundState = (
   roundState: RoundState,
-  roundNo: number,
+  roundNo: number | null,
   currentPlayerId: number,
   opponentId: number,
   currentQuestion: Question | null,
@@ -92,6 +101,8 @@ ustawia stan gry jako rozpoczęty.
 @returns void
 */
 const startGame = () => {
+  gameStarted.value = false;
+  gameWinnerId.value = null;
   players.value = [0, 1];
   const initialPlayerId = playersData.value[randomIndex()].id;
   initRoundState(initiaRoundState);
@@ -272,14 +283,26 @@ const handleAnswerClick = (answer: number | null) => {
   if (!opponent) return;
 
   if (answer === currentQuestion.answer) {
-    owner.power++;
+    owner.power = Math.min(MAX_POWER, owner.power + 1); //min=0 nmax = 6
     owner.wins++;
-    opponent.hp--;
+    opponent.hp = Math.max(MIN_HP, opponent.hp - 1);
   } else {
-    owner.hp--;
+    owner.hp = Math.max(MIN_HP, owner.hp - 1); // (max= 10 min=0)
   }
 
-  roundNo = (roundNo ?? 0) + 1;
+  if (owner.hp === 0) {
+    gameWinnerId.value = opponent.id;
+    opponent.wins++;
+  }
+
+  if (opponent.hp === 0) {
+    gameWinnerId.value = owner.id;
+    owner.wins++;
+  }
+
+  if (opponent.hp === 0 || owner.hp === 0) {
+    roundNo = null;
+  } else roundNo = (roundNo ?? 0) + 1;
 
   setRoundState(
     roundState.value,
@@ -289,6 +312,10 @@ const handleAnswerClick = (answer: number | null) => {
     nextQuestion,
     nextAnswers,
   );
+
+  if (gameWinnerId.value !== null) {
+    gameStarted.value = false;
+  }
 
   console.log("state after", roundState.value);
 };
@@ -319,6 +346,10 @@ const handleAnswerClick = (answer: number | null) => {
     >
       Pytanie: {{ roundState.currentQuestion.num1 }} *
       {{ roundState.currentQuestion.num2 }} = ???
+    </div>
+    <div v-if="gameWinnerId !== null">
+      <p>Wygrana !!. Gratulacje {{ gameWinner?.name }}.</p>
+      <p>Czy chcesz zagrać jeszcze raz?</p>
     </div>
     <div id="start-button" v-if="!gameStarted" @click="startGame">Start</div>
     <div
