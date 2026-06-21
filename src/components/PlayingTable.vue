@@ -103,9 +103,7 @@ ustawia stan gry jako rozpoczęty.
 const startGame = () => {
   gameStarted.value = false;
   gameWinnerId.value = null;
-  players.value = [0, 1];
   const initialPlayerId = playersData.value[randomIndex()].id;
-  initRoundState(initiaRoundState);
   const opponentId = playersData.value.filter(
     (player) => player.id !== initialPlayerId,
   )[0].id;
