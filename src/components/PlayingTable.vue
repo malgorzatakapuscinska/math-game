@@ -51,7 +51,6 @@ const initRoundState = (initiaRoundState: RoundState) => {
  * ustawia stan rundy
  *
  *
- * @param roundState
  * @param players tablica zawierająca id aktualnych graczy
  * @param roundNo
  * @param currentPlayerId
@@ -61,20 +60,19 @@ const initRoundState = (initiaRoundState: RoundState) => {
  */
 
 const setRoundState = (
-  roundState: RoundState,
   roundNo: number | null,
   currentPlayerId: number,
   opponentId: number,
   currentQuestion: Question | null,
   answers: number[],
 ) => {
-  Object.assign(roundState, {
+  roundState.value = {
     roundNo,
     currentPlayerId,
     opponentId,
     currentQuestion,
     answers,
-  });
+  };
 };
 
 const randomIndex = (): number =>
@@ -121,14 +119,7 @@ const startGame = () => {
 
   const answers = generateAnswers(possibleAnswers, currentQuestion.answer);
 
-  setRoundState(
-    roundState.value,
-    1,
-    initialPlayerId,
-    opponentId,
-    currentQuestion,
-    answers,
-  );
+  setRoundState(1, initialPlayerId, opponentId, currentQuestion, answers);
 
   gameStarted.value = true;
 };
@@ -315,7 +306,6 @@ const handleAnswerClick = (answer: number | null) => {
   } else roundNo = (roundNo ?? 0) + 1;
 
   setRoundState(
-    roundState.value,
     roundNo,
     opponentId!,
     currentPlayerId!,
