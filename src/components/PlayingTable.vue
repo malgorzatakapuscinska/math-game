@@ -43,8 +43,15 @@ const gameWinner = computed(() => {
 
 const roundState = ref<RoundState>(structuredClone(initiaRoundState));
 
-const initRoundState = (initiaRoundState: RoundState) => {
-  return structuredClone(initiaRoundState);
+const resetRoundState = () => {
+  roundState.value = structuredClone(initiaRoundState);
+};
+
+const resetPlayerStats = () => {
+  playersData.value.forEach((player) => {
+    player.hp = MAX_HP;
+    player.power = MIN_POWER;
+  });
 };
 
 /**
@@ -99,6 +106,8 @@ ustawia stan gry jako rozpoczęty.
 @returns void
 */
 const startGame = () => {
+  resetRoundState();
+  resetPlayerStats();
   gameStarted.value = false;
   gameWinnerId.value = null;
   const initialPlayerId = playersData.value[randomIndex()].id;
