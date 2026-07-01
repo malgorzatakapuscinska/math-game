@@ -14,6 +14,7 @@ import { roundState as initiaRoundState } from "../data/round-stete";
 import { MIN_HP, MAX_HP, MIN_POWER, MAX_POWER } from "../assets/game-rules";
 import type { GameConfig } from "../types/gameConfig";
 import PlayerPanel from "./PlayerPanel.vue";
+import GameInfo from "./GameInfo.vue";
 
 /*
 Informacja czy gra została rozpoczęta.
@@ -351,6 +352,7 @@ const handleAnswerClick = (answer: number | null) => {
       Pytanie: {{ roundState.currentQuestion.num1 }} *
       {{ roundState.currentQuestion.num2 }} = ???
     </div>
+    <GameInfo v-if="gameWinner" :player-name="gameWinner?.name" />
     <div v-if="gameWinnerId !== null">
       <p>Wygrana !!. Gratulacje {{ gameWinner?.name }}.</p>
       <p>Czy chcesz zagrać jeszcze raz?</p>
