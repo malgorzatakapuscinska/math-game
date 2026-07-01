@@ -1,4 +1,7 @@
 {
+  "engines": {
+    "node": "24.16.0"
+  },
   "name": "math-game",
   "private": true,
   "version": "0.0.0",

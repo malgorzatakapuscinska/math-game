@@ -12,11 +12,18 @@ import type { RoundState } from "../types/round-state";
 import { players as initialPlayers } from "../data/players";
 import { roundState as initiaRoundState } from "../data/round-stete";
 import { MIN_HP, MAX_HP, MIN_POWER, MAX_POWER } from "../assets/game-rules";
+import type { GameConfig } from "../types/gameConfig";
+import PlayerPanel from "./PlayerPanel.vue";
 
 /*
 Informacja czy gra została rozpoczęta.
 */
 const gameStarted = ref(false);
+
+const gameConfig = ref<GameConfig>({
+  levelId: 0,
+  operation: "*",
+});
 
 /**
 Tablica wszystkich pytań dostępnych w bieżącej rozgrywce.
@@ -66,20 +73,8 @@ const resetPlayerStats = () => {
  * @param answers
  */
 
-const setRoundState = (
-  roundNo: number | null,
-  currentPlayerId: number,
-  opponentId: number,
-  currentQuestion: Question | null,
-  answers: number[],
-) => {
-  roundState.value = {
-    roundNo,
-    currentPlayerId,
-    opponentId,
-    currentQuestion,
-    answers,
-  };
+const setRoundState = (state: RoundState) => {
+  roundState.value = state;
 };
 
 const randomIndex = (): number =>
@@ -110,25 +105,32 @@ const startGame = () => {
   resetPlayerStats();
   gameStarted.value = false;
   gameWinnerId.value = null;
-  const initialPlayerId = playersData.value[randomIndex()].id;
+  const currentPlayerId = playersData.value[randomIndex()].id;
   const opponentId = playersData.value.filter(
-    (player) => player.id !== initialPlayerId,
+    (player) => player.id !== currentPlayerId,
   )[0].id;
-  questions.value = shuffle(generateQuestions(2, 4));
+  const roundNo = 0;
+  questions.value = shuffle(generateQuestions(3, 6));
   const currentQuestion = drawQuestion(questions.value);
 
   if (!currentQuestion) return;
 
   const possibleAnswers = generatePossibleAnswers(
     currentQuestion.answer,
-    2,
-    40,
+    3,
+    60,
     5,
   );
 
   const answers = generateAnswers(possibleAnswers, currentQuestion.answer);
 
-  setRoundState(1, initialPlayerId, opponentId, currentQuestion, answers);
+  setRoundState({
+    roundNo,
+    currentPlayerId,
+    opponentId,
+    currentQuestion,
+    answers,
+  });
 
   gameStarted.value = true;
 };
@@ -285,7 +287,7 @@ const handleAnswerClick = (answer: number | null) => {
   const opponent = getPlayerByID(opponentId);
   const nextQuestion: Question | null = drawQuestion(questions.value);
   const nextAnswers: number[] | null = generateAnswers(
-    generatePossibleAnswers(nextQuestion!.answer, 2, 40, 5),
+    generatePossibleAnswers(nextQuestion!.answer, 3, 60, 5),
     nextQuestion!.answer,
   );
 
@@ -314,13 +316,13 @@ const handleAnswerClick = (answer: number | null) => {
     roundNo = null;
   } else roundNo = (roundNo ?? 0) + 1;
 
-  setRoundState(
+  setRoundState({
     roundNo,
-    opponentId!,
-    currentPlayerId!,
-    nextQuestion,
-    nextAnswers,
-  );
+    opponentId: currentPlayerId,
+    currentPlayerId: opponentId,
+    currentQuestion: nextQuestion,
+    answers: nextAnswers,
+  });
 
   if (gameWinnerId.value !== null) {
     gameStarted.value = false;
@@ -336,17 +338,10 @@ const handleAnswerClick = (answer: number | null) => {
     class="flex flex-col gap-10 justify-center items-center h-screen"
   >
     <div class="w-[300px]" v-if="gamePlayers.length >= 2">
-      <div class="relative">
-        <p>Gracz1: {{ gamePlayers[0]?.name }}</p>
-        <div
-          class="bg-blue-500 absolute right-1 top-0"
-          v-if="roundState.currentPlayerId === 0"
-        >
-          <span class="text-white">Gracz aktywny</span>
-        </div>
-      </div>
-      <p>Health: {{ gamePlayers[0]?.hp }}</p>
-      <p>Pasek Mocy: {{ gamePlayers[0]?.power }}</p>
+      <PlayerPanel
+        :player="playersData[0]"
+        :current-player-id="roundState.currentPlayerId"
+      />
     </div>
     <div
       id="question"
@@ -377,17 +372,10 @@ const handleAnswerClick = (answer: number | null) => {
       </button>
     </div>
     <div id="player2-table" class="w-[300px]" v-if="gamePlayers.length >= 2">
-      <div class="relative">
-        <p>Gracz2: {{ gamePlayers[1]?.name }}</p>
-        <div
-          class="bg-blue-500 absolute right-1 top-0"
-          v-if="roundState.currentPlayerId === 1"
-        >
-          <span class="text-white">Gracz aktywny</span>
-        </div>
-      </div>
-      <p>Health: {{ gamePlayers[1]?.hp }}</p>
-      <p>Pasek Mocy: {{ gamePlayers[1]?.power }}</p>
+      <PlayerPanel
+        :player="playersData[1]"
+        :current-player-id="roundState.currentPlayerId"
+      />
     </div>
   </section>
 </template>
