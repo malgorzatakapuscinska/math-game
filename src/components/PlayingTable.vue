@@ -1,8 +1,7 @@
 /** Komponent odpowiedzialny za obsługę rozgrywki. Funkcjonalności: generowanie
 pytań z tabliczki mnożenia, losowanie kolejności pytań, losowanie aktualnego
 pytania, generowanie zestawu odpowiedzi (1 poprawna + 3 błędne), przechowywanie
-stanu graczy oraz przebiegu gry. */ /** /** TODO remove plaers to data directory
-*/
+stanu graczy oraz przebiegu gry. */ /**
 
 <script setup lang="ts">
 import { ref, computed } from "vue";
@@ -12,9 +11,13 @@ import type { RoundState } from "../types/round-state";
 import { players as initialPlayers } from "../data/players";
 import { roundState as initiaRoundState } from "../data/round-stete";
 import { MIN_HP, MAX_HP, MIN_POWER, MAX_POWER } from "../assets/game-rules";
+import { shuffle } from "../utils/shuffle.ts";
+import { generateQuestions } from "../utils/generateQuestions.ts";
 import type { GameConfig } from "../types/gameConfig";
 import PlayerPanel from "./PlayerPanel.vue";
 import GameInfo from "./GameInfo.vue";
+import AnswersPanel from "./AnswersPanel.vue";
+import QuestionPanel from "./QuestionPanel.vue";
 
 /*
 Informacja czy gra została rozpoczęta.
@@ -25,6 +28,8 @@ const gameConfig = ref<GameConfig>({
   levelId: 0,
   operation: "*",
 });
+
+const questionsTemplate = generateQuestions(3, 6);
 
 /**
 Tablica wszystkich pytań dostępnych w bieżącej rozgrywce.
@@ -111,7 +116,7 @@ const startGame = () => {
     (player) => player.id !== currentPlayerId,
   )[0].id;
   const roundNo = 0;
-  questions.value = shuffle(generateQuestions(3, 6));
+  questions.value = shuffle([...questionsTemplate]);
   const currentQuestion = drawQuestion(questions.value);
 
   if (!currentQuestion) return;
@@ -134,30 +139,6 @@ const startGame = () => {
   });
 
   gameStarted.value = true;
-};
-
-/**
-Generuje wszystkie pytania dla wybranego zakresu tabliczki mnożenia.
-
-@param min Minimalna wartość pierwszego czynnika.
-@param max Maksymalna wartość pierwszego czynnika.
-
-@returns Tablica obiektów Question.
-*/
-
-const generateQuestions = (min: number, max: number): Question[] => {
-  const questionsTable: Question[] = [];
-  for (let num1 = min; num1 <= max; num1++) {
-    for (let num2 = 1; num2 <= 10; num2++) {
-      questionsTable.push({
-        num1,
-        num2,
-        answer: num1 * num2,
-      });
-    }
-  }
-
-  return questionsTable;
 };
 
 /**
@@ -225,31 +206,6 @@ const generateAnswers = (array: number[], answer: number): number[] => {
 };
 
 /**
-Tasuje elementy tablicy.
-Funkcja generyczna - działa z dowolnym typem danych.
-
-@param array Tablica do przetasowania.
-
-@returns Nowa przetasowana tablica.
-*/
-
-// const shuffle = <T,>(array: T[]): T[] => {
-//   return [...array].sort(() => Math.random() - 0.5);
-// };
-
-const shuffle = <T,>(array: T[]): T[] => {
-  const copy = [...array];
-
-  for (let i = copy.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-
-    [copy[i], copy[j]] = [copy[j], copy[i]];
-  }
-
-  return copy;
-};
-
-/**
 Losuje kolejne pytanie z puli pytań.
 Pobiera pierwszy element tablicy questions
 i ustawia go jako aktualne pytanie.
@@ -268,18 +224,7 @@ i zapisuje je do zmiennej answers.
 @returns void
 */
 
-// const drawAnswers = (currentQuestion: Question, possibleAnswers: number[]) => {
-// for possibility currenQuestion equels null
-// if (!currentQuestion.value) {
-//   return;
-// }
-
-//   const localArray = generateAnswers(possibleAnswers, currentQuestion.answer);
-
-//   return localArray;
-// };
-
-const handleAnswerClick = (answer: number | null) => {
+const handleAnswerClick = (answer: number) => {
   let { currentPlayerId, currentQuestion, opponentId, roundNo } =
     roundState.value;
   if (!currentQuestion) return;
@@ -334,50 +279,28 @@ const handleAnswerClick = (answer: number | null) => {
 </script>
 
 <template>
-  <section
-    id="plaing-table"
-    class="flex flex-col gap-10 justify-center items-center h-screen"
-  >
-    <div class="w-[300px]" v-if="gamePlayers.length >= 2">
-      <PlayerPanel
-        :player="playersData[0]"
-        :current-player-id="roundState.currentPlayerId"
-      />
-    </div>
-    <div
-      id="question"
-      class="w-[300px]"
+  <section class="flex flex-col gap-10 justify-center items-center h-screen">
+    <PlayerPanel
+      :player="playersData[0]"
+      :current-player-id="roundState.currentPlayerId"
+      v-if="gamePlayers.length >= 2"
+    />
+    <QuestionPanel
       v-if="roundState.currentQuestion && gameStarted"
-    >
-      Pytanie: {{ roundState.currentQuestion.num1 }} *
-      {{ roundState.currentQuestion.num2 }} = ???
-    </div>
+      :question="roundState.currentQuestion"
+    />
     <GameInfo v-if="gameWinner" :player-name="gameWinner?.name" />
-    <div v-if="gameWinnerId !== null">
-      <p>Wygrana !!. Gratulacje {{ gameWinner?.name }}.</p>
-      <p>Czy chcesz zagrać jeszcze raz?</p>
-    </div>
     <div id="start-button" v-if="!gameStarted" @click="startGame">Start</div>
-    <div
-      id="answers"
+    <AnswersPanel
       v-if="gameStarted"
-      class="grid grid-cols-2 gap-4 w-[300px]"
-    >
-      <button
-        type="button"
-        @click="handleAnswerClick(answer)"
-        class="p-2 border-2 border-solid"
-        v-for="answer in roundState.answers"
-        :key="answer"
-      >
-        {{ answer }}
-      </button>
-    </div>
-    <div id="player2-table" class="w-[300px]" v-if="gamePlayers.length >= 2">
-      <PlayerPanel
-        :player="playersData[1]"
-        :current-player-id="roundState.currentPlayerId"
-      />
-    </div>
+      @answer-click="handleAnswerClick"
+      :answers="roundState.answers"
+    />
+
+    <PlayerPanel
+      :player="playersData[1]"
+      :current-player-id="roundState.currentPlayerId"
+      v-if="gamePlayers.length >= 2"
+    />
   </section>
 </template>

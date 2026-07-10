@@ -5,5 +5,5 @@ export interface RoundState {
   currentPlayerId: number | null;
   opponentId: number | null;
   currentQuestion: Question | null;
-  answers: number[] | null;
+  answers: number[];
 }
