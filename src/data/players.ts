@@ -1,5 +1,5 @@
 import type { Player } from "../types/player";
-import { MAX_HP, MIN_POWER } from "../assets/game-rules";
+import { MAX_HP, MIN_POWER } from "../data/game-rules";
 
 export const players: Player[] = [
   {

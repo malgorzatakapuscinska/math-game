@@ -5,15 +5,20 @@ stanu graczy oraz przebiegu gry. */ /**
 
 <script setup lang="ts">
 import { ref, computed } from "vue";
+
 import type { Player } from "../types/player";
 import type { Question } from "../types/question";
 import type { RoundState } from "../types/round-state";
+import type { GameConfig } from "../types/gameConfig";
+
 import { players as initialPlayers } from "../data/players";
 import { roundState as initiaRoundState } from "../data/round-stete";
-import { MIN_HP, MAX_HP, MIN_POWER, MAX_POWER } from "../assets/game-rules";
+import { MIN_HP, MAX_HP, MIN_POWER, MAX_POWER } from "../data/game-rules.ts";
+
 import { shuffle } from "../utils/shuffle.ts";
 import { generateQuestions } from "../utils/generateQuestions.ts";
-import type { GameConfig } from "../types/gameConfig";
+import { getRandomIndex } from "../utils/getRandomIndex.ts";
+
 import PlayerPanel from "./PlayerPanel.vue";
 import GameInfo from "./GameInfo.vue";
 import AnswersPanel from "./AnswersPanel.vue";
@@ -83,8 +88,8 @@ const setRoundState = (state: RoundState) => {
   roundState.value = state;
 };
 
-const randomIndex = (): number =>
-  Math.floor(Math.random() * players.value.length);
+// const randomIndex = (): number =>
+//   Math.floor(Math.random() * players.value.length);
 
 const getPlayerByID = (id: number | null) => {
   if (id === null) return;
@@ -111,7 +116,8 @@ const startGame = () => {
   resetPlayerStats();
   gameStarted.value = false;
   gameWinnerId.value = null;
-  const currentPlayerId = playersData.value[randomIndex()].id;
+  const currentPlayerId =
+    playersData.value[getRandomIndex(players.value.length)].id;
   const opponentId = playersData.value.filter(
     (player) => player.id !== currentPlayerId,
   )[0].id;

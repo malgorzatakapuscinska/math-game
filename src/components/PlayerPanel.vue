@@ -12,7 +12,7 @@ const { player, currentPlayerId } = defineProps<{
       <p>{{ player.name }}</p>
       <div
         class="bg-blue-500 absolute right-1 top-0"
-        v-if="currentPlayerId === player.id"
+        v-if="currentPlayerId && currentPlayerId === player.id"
       >
         <span class="text-white">Gracz aktywny</span>
       </div>
